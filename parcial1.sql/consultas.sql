@@ -139,7 +139,7 @@ END;
 
 -- ============================================================
 -- BLOQUE 3: cursor SIN parametros + cursor CON parametros,
---           combinados en loops anidados
+--           combinados en loops anidados (CORREGIDO)
 -- ============================================================
 -- Objetivo de negocio:
 --   Recorrer todos los edificios y, dentro de cada uno, listar
@@ -175,9 +175,6 @@ DECLARE
        AND estado = 'DISPONIBLE'
      ORDER BY numero_unidad;
 
-  r_edificio  c_edificios%ROWTYPE;
-  r_unidad    c_unidades_disponibles%ROWTYPE;
-
   v_total_disponibles NUMBER := 0;
 
 BEGIN
@@ -185,32 +182,25 @@ BEGIN
   DBMS_OUTPUT.PUT_LINE('=== Unidades disponibles por edificio ===');
 
   -- --------------------------------------------------------
-  -- LOOP EXTERNO: un edificio a la vez (cursor sin parametros)
+  -- LOOP EXTERNO: recorre edificios con Bucle FOR
   -- --------------------------------------------------------
-  OPEN c_edificios;
-  LOOP
-    FETCH c_edificios INTO r_edificio;
-    EXIT WHEN c_edificios%NOTFOUND;
+  FOR r_edificio IN c_edificios LOOP
 
     DBMS_OUTPUT.PUT_LINE('Edificio: ' || r_edificio.nombre);
 
     -- ------------------------------------------------------
     -- LOOP INTERNO: unidades disponibles de ESE edificio
-    -- (cursor con parametro, se abre y cierra en cada vuelta)
+    -- (se pasa r_edificio.edificio_id como parametro al cursor)
     -- ------------------------------------------------------
-    OPEN c_unidades_disponibles(r_edificio.edificio_id);
-    LOOP
-      FETCH c_unidades_disponibles INTO r_unidad;
-      EXIT WHEN c_unidades_disponibles%NOTFOUND;
+    FOR r_unidad IN c_unidades_disponibles(r_edificio.edificio_id) LOOP
 
       DBMS_OUTPUT.PUT_LINE('   -> Unidad ' || r_unidad.numero_unidad
                             || ' (' || r_unidad.categoria || ')');
       v_total_disponibles := v_total_disponibles + 1;
+
     END LOOP;
-    CLOSE c_unidades_disponibles;
 
   END LOOP;
-  CLOSE c_edificios;
 
   DBMS_OUTPUT.PUT_LINE('=== Total de unidades disponibles en la empresa: '
                         || v_total_disponibles || ' ===');
